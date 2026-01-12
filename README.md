@@ -54,7 +54,7 @@ README.md
 - 需依赖：后端服务已启动（地址配置在.env.development中）
 
 ### 4.2 环境配置步骤
-1. 克隆仓库：`git clone https://github.com/【组织名称】/campus-security-frontend.git`
+1. 克隆仓库：`git clone https://github.com/SmartCampus-Sentinel/campus-security-frontend.git`
 2. 进入项目目录：`cd campus-security-frontend`
 3. 安装依赖：`npm install`（安装Web端及公共依赖）
 4. 配置环境变量：
