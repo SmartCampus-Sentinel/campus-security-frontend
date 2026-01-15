@@ -23,47 +23,90 @@ import { ElMessage, ElForm } from 'element-plus';
 import { useRouter } from 'vue-router';
 import { login } from '@/api/auth'; // 后续封装接口
 
-// 表单相关
+
+// ========== 1. 临时模拟登录接口（替代@/api/auth，避免接口未实现报错） ==========
+// 定义接口类型（规范入参和返回值）
+interface LoginParams {
+  username: string;
+  password: string;
+  type: number;
+}
+interface LoginRes {
+  data: {
+    token: string;
+    username: string;
+  };
+}
+// 模拟登录接口（实际项目中替换为真实接口导入）
+const login = async (params: LoginParams): Promise<LoginRes> => {
+  // 初始账号密码：admin / 123456
+  if (params.username === 'admin' && params.password === '123456') {
+    return {
+      data: {
+        token: 'mock-token-' + Date.now(), // 模拟生成token
+        username: params.username
+      }
+    };
+  } else {
+    throw new Error('用户名或密码错误');
+  }
+};
+
+// ========== 2. 表单相关配置（添加初始密码） ==========
 const formRef = ref<InstanceType<typeof ElForm>>();
+// 配置初始账号密码（默认填充admin/123456，方便测试）
 const form = ref({
-  username: '',
-  password: '',
+  username: 'admin', // 初始用户名
+  password: '123456' // 初始密码
 });
+// 表单校验规则
 const rules = ref({
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 });
 
-// 路由实例
+// ========== 3. 路由实例 ==========
 const router = useRouter();
 
-// 登录方法
+// ========== 4. 登录方法（修正表单校验逻辑） ==========
 const handleLogin = async () => {
   if (!formRef.value) return;
-  // 表单校验
-  await formRef.value.validate(async (valid) => {
-    if (valid) {
-      try {
-        // 调用登录接口
-        const res = await login({
-          username: form.value.username,
-          password: form.value.password,
-          type: 1, // 1=管理员
-        });
-        // 存储token和用户信息
-        localStorage.setItem('token', res.data.token);
-        ElMessage.success('登录成功');
-        // 跳首页
-        router.push('/dashboard');
-      } catch (err) {
-        ElMessage.error('登录失败，请检查账号密码');
-      }
+
+  // 修正：ElForm的validate回调不是async，改用Promise形式的校验
+  try {
+    // 表单校验（Promise形式，更符合TS异步逻辑）
+    await formRef.value.validate();
+
+    // 校验通过，调用登录接口
+    const res = await login({
+      username: form.value.username,
+      password: form.value.password,
+      type: 1, // 1=管理员
+    });
+
+    // 存储token和用户信息
+    localStorage.setItem('token', res.data.token);
+    localStorage.setItem('username', res.data.username);
+    ElMessage.success('登录成功！即将跳转到首页');
+
+    // 跳转到首页
+    setTimeout(() => {
+      router.push('/dashboard').catch(err => console.warn('路由跳转失败:', err));
+    }, 1000);
+
+  } catch (err: any) {
+    // 区分校验失败和登录失败
+    if (err.message === 'Validation failed') {
+      ElMessage.warning('请完善表单信息');
+    } else {
+      ElMessage.error(err.message || '登录失败，请检查账号密码');
     }
-  });
+  }
 };
 </script>
 
 <style scoped>
+/* 补充缺失的样式，保证页面美观 */
 .login-container {
   width: 100vw;
   height: 100vh;
@@ -72,4 +115,20 @@ const handleLogin = async () => {
   align-items: center;
   background: #f5f5f5;
 }
-</style>
+.login-card {
+  width: 420px;
+  padding: 30px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+.login-title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #1989fa;
+  font-size: 20px;
+}
+.login-btn {
+  width: 100%;
+  height: 40px;
+  font-size: 16px;
+}
+</style>>
