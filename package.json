@@ -10,6 +10,12 @@
     "lint": "eslint . --ext .vue,.js,.ts --fix"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "@fortawesome/fontawesome-free": "^7.1.0",
+    "@fortawesome/fontawesome-svg-core": "^7.1.0",
+    "@fortawesome/free-brands-svg-icons": "^7.1.0",
+    "@fortawesome/free-solid-svg-icons": "^7.1.0",
+    "@fortawesome/vue-fontawesome": "^3.1.3",
     "axios": "1.6.8",
     "element-plus": "2.6.3",
     "pinia": "2.1.7",
@@ -18,15 +24,16 @@
     "vue-router": "4.3.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "5.0.4",
     "@types/node": "20.11.28",
     "@types/video.js": "7.3.52",
     "@typescript-eslint/eslint-plugin": "7.2.0",
     "@typescript-eslint/parser": "7.2.0",
+    "@vitejs/plugin-vue": "5.0.4",
     "eslint": "8.57.0",
     "eslint-plugin-vue": "9.23.0",
     "typescript": "5.4.2",
     "vite": "5.1.6",
+    "vite-plugin-svg-icons": "^2.0.1",
     "vue-tsc": "2.0.6"
   }
 }
