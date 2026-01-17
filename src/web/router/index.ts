@@ -17,6 +17,7 @@ const AlarmDetail = () => import('@/pages/alarm/Detail.vue');
 const DeviceList = () => import('@/pages/device/List.vue');
 const DeviceConfig = () => import('@/pages/device/Config.vue');
 const NotFound = () => import('@/pages/404/NotFound.vue');
+const root = () => import('@/pages/root/root.vue');
 
 // 3. 定义路由规则（无修改，404路由位置正确）
 const routes: Array<RouteRecordRaw> = [
@@ -72,6 +73,13 @@ const routes: Array<RouteRecordRaw> = [
         name: 'DeviceConfig',
         component: DeviceConfig,
         meta: { title: '设备配置' },
+        props: true
+      },
+      {
+        path: 'root/root',
+        name: 'root',
+        component: root,
+        meta: { title: '用户中心' },
         props: true
       }
     ]

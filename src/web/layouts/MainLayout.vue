@@ -1,71 +1,117 @@
 <template>
   <div class="main-layout">
-    <!-- 侧边栏（保持路由path和样式不变） -->
-    <div class="sidebar">
-      <el-menu
-        default-active="/dashboard"
-        router
-        background-color="#2e3b4e"
-        text-color="#fff"
-        active-text-color="#409eff"
-      >
-        <!-- 首页：直接使用全局注册的House图标 -->
-        <el-menu-item index="/dashboard">
-          <template #title>首页</template>
-          <el-icon><House /></el-icon>
-        </el-menu-item>
-        <!-- 设备管理：直接使用全局注册的Monitor图标 -->
-        <el-menu-item index="/dashboard/device/list">
-          <template #title>设备管理</template>
-          <el-icon><Monitor /></el-icon>
-        </el-menu-item>
-        <!-- 报警管理：直接使用全局注册的Warning图标 -->
-        <el-menu-item index="/dashboard/alarm/list">
-          <template #title>报警管理</template>
-          <el-icon color="red"><Warning /></el-icon>
-        </el-menu-item>
-      </el-menu>
-    </div>
-    <!-- 主内容区（路由出口不变） -->
-    <div class="main-content">
+    <!-- 侧边栏 -->
+    <Sidebar
+      :is-collapsed="isCollapsed"
+      :menu-items="menuItems"
+      :permissions="userPermissions"
+      @update:isCollapsed="handleCollapseChange"
+    />
+
+    <!-- 主内容区 -->
+    <div class="main-content" :class="{ 'content-expanded': isCollapsed }">
       <router-view></router-view>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
+import { useRoute } from 'vue-router';
+import { House, Monitor, Warning, User } from '@element-plus/icons-vue';
+import Sidebar from '@/components/Sidebar.vue'; // 引入侧边栏组件
 
+// 定义菜单项类型
+interface MenuItem {
+  index: string;
+  title: string;
+  icon: any;
+  iconColor?: string;
+  permission?: string;
+}
+
+// 控制侧边栏收起状态
+const isCollapsed = ref(false);
+
+// 用户权限（示例）
+const userPermissions = ref<string[]>(['admin', 'device_manager', 'alarm_manager', 'user_center_view'])
+
+
+// 菜单项配置
+const menuItems: MenuItem[] = [
+  {
+    index: '/dashboard',
+    title: '首页',
+    icon: House
+  },
+  {
+    index: '/dashboard/device/list',
+    title: '设备管理',
+    icon: Monitor
+  },
+  {
+    index: '/dashboard/alarm/list',
+    title: '报警管理',
+    icon: Warning,
+    iconColor: 'red'
+  },
+  {
+    index: '/dashboard/root/root',
+    title: '用户中心',
+    icon: User,
+    iconColor: 'red',
+    permission: 'user_center_view'
+  }
+];
+
+// 处理侧边栏收起状态变化
+const handleCollapseChange = (value: boolean) => {
+  isCollapsed.value = value;
+};
 </script>
 
 <style scoped>
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+  }
+
+  .main-content {
+    width: 100%;
+    margin-left: 0;
+    padding: 10px;
+  }
+
+  .content-expanded {
+    margin-left: 0;
+  }
+}
+
+/* 平板适配 */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  .main-content {
+    padding: 15px;
+  }
+}
+
+
 .main-layout {
   display: flex;
   height: 100vh;
   overflow: hidden;
 }
-.sidebar {
-  width: 200px;
-  background: #2e3b4e;
-  color: #fff;
-  height: 100%;
-}
+
 .main-content {
   flex: 1;
   padding: 20px;
   background: #f9f9f9;
   overflow-y: auto;
+  transition: all 0.3s ease;
 }
 
-/* 菜单样式优化（保持不变） */
-:deep(.el-menu) {
-  height: 100%;
-  border-right: none;
-}
-:deep(.el-menu-item:hover) {
-  background-color: #1f2d3d !important;
-}
-:deep(.el-menu-item.is-active) {
-  background-color: #1f2d3d !important;
-  color: #409eff !important;
+.content-expanded {
+  flex: 1 calc(100% - 64px);
 }
 </style>
