@@ -73,7 +73,7 @@ const emit = defineEmits<Emits>();
 const route = useRoute();
 
 // 计算当前激活的菜单项
-const defaultActive = computed(() => route.path || '/dashboard');
+const defaultActive = computed(() => route.path || '/dashboard.ts');
 
 // 过滤有权限的菜单项
 const menuItems = computed(() => {

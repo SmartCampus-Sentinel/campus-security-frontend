@@ -16,10 +16,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+
+import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { House, Monitor, Warning, User } from '@element-plus/icons-vue';
 import Sidebar from '@/components/Sidebar.vue'; // 引入侧边栏组件
+
+// 侧边栏折叠状态（从本地存储读取）
+const isCollapse = ref<boolean>(localStorage.getItem('sidebarCollapse') === 'true');
+
+// 切换侧边栏折叠状态
+const handleCollapse = () => {
+  isCollapse.value = !isCollapse.value;
+  // 同步到本地存储
+  localStorage.setItem('sidebarCollapse', isCollapse.value.toString());
+};
 
 // 定义菜单项类型
 interface MenuItem {
@@ -56,7 +67,7 @@ const menuItems: MenuItem[] = [
     iconColor: 'red'
   },
   {
-    index: '/dashboard/root/root',
+    index: '/dashboard/setting',
     title: '用户中心',
     icon: User,
     iconColor: 'red',

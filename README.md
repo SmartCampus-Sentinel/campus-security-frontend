@@ -65,6 +65,42 @@ index.html（Web端入口）
 package.json
 README.md
 ```
+```
+src/web/
+├── api/                # 接口请求封装
+│   ├── index.ts        # axios 实例配置
+│   ├── login.ts        # 登录相关接口
+│   ├── device.ts       # 设备相关接口
+│   └── alarm.ts        # 报警相关接口
+├── assets/             # 静态资源（图片/样式）
+├── components/         # 全局通用组件（如查询表单、分页、图表）
+├── layouts/            # 布局组件（MainLayout.vue）
+├── pages/              # 业务页面
+│   ├── login/          # 登录页
+│   │   └── Login.vue
+│   ├── dashboard/      # 首页看板
+│   │   └── Index.vue
+│   ├── device/         # 设备管理
+│   │   ├── List.vue
+│   │   └── Config.vue
+│   ├── alarm/          # 报警管理
+│   │   ├── List.vue
+│   │   └── Detail.vue
+│   ├── setting/        # 系统设置
+│   │   └── Index.vue
+│   └── 404/            # 404页面
+│       └── NotFound.vue
+├── plugins/            # 插件配置（icons.ts）
+├── router/             # 路由配置（index.ts）
+├── store/              # 全局状态（可选，Pinia）
+├── types/              # TS类型定义
+├── utils/              # 工具函数（时间格式化、权限判断）
+├── App.vue
+└── main.ts
+```
+
+
+
 4. 开发环境搭建
 
 4.1 前置依赖

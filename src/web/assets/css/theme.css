@@ -1,0 +1,26 @@
+/* 默认主题 */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #333333;
+  --card-bg: #ffffff;
+}
+
+/* 暗黑主题 */
+.dark-theme {
+  --bg-color: #1e1e1e;
+  --text-color: #e5e5e5;
+  --card-bg: #2d2d2d;
+}
+
+/* 全局样式适配 */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+.el-card {
+  background-color: var(--card-bg) !important;
+}
+.dark-theme .el-dialog {
+  background-color: #2d2d2d !important;
+  color: #e5e5e5 !important;
+}

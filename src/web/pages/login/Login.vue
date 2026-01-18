@@ -21,7 +21,7 @@
 import { ref } from 'vue';
 import { ElMessage, ElForm } from 'element-plus';
 import { useRouter } from 'vue-router';
-import { login } from '@/api/auth'; // 后续封装接口
+import { login } from '@/api/login'; // 后续封装接口
 
 
 // ========== 1. 临时模拟登录接口（替代@/api/auth，避免接口未实现报错） ==========
@@ -91,7 +91,7 @@ const handleLogin = async () => {
 
     // 跳转到首页
     setTimeout(() => {
-      router.push('/dashboard').catch(err => console.warn('路由跳转失败:', err));
+      router.push('/dashboard.ts').catch(err => console.warn('路由跳转失败:', err));
     }, 1000);
 
   } catch (err: any) {

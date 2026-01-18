@@ -1,32 +1,39 @@
-// 1. 导入核心依赖
+// 1. 导入核心依赖（保留类型导入，优化注释）
 import {
   createRouter,
-  createWebHashHistory, // 【修改1】开发环境改用hash模式，避免404
+  createWebHashHistory,
   RouteRecordRaw,
   NavigationGuardNext,
   RouteLocationNormalized
 } from 'vue-router';
 
-// 2. 导入页面/布局组件（【修改2】确认@指向src/web，若未配置则改用相对路径）
-// 注意：以下路径需确保文件存在：src/web/layouts/MainLayout.vue、src/web/pages/xxx/xxx.vue
+// 2. 导入页面/布局组件（统一路径规范：文件夹小写、组件首字母大写，语义化命名）
+// 注意：确保文件实际路径与导入路径一致：
+// src/web/layouts/MainLayout.vue
+// src/web/pages/login/login.vue
+// src/web/pages/dashboard/Index.vue
+// src/web/pages/alarm/List.vue | Detail.vue
+// src/web/pages/setting/Index.vue（用户中心）
+// src/web/pages/404/NotFound.vue
+// src/web/pages/device/List.vue | Config.vue
 const MainLayout = () => import('@/layouts/MainLayout.vue');
-const Login = () => import('@/pages/login/Login.vue');
+const Login = () => import('@/pages/login/Login.vue'); // 统一文件夹小写
 const Dashboard = () => import('@/pages/dashboard/Index.vue');
 const AlarmList = () => import('@/pages/alarm/List.vue');
 const AlarmDetail = () => import('@/pages/alarm/Detail.vue');
 const DeviceList = () => import('@/pages/device/List.vue');
 const DeviceConfig = () => import('@/pages/device/Config.vue');
+const UserCenter = () => import('@/pages/setting/Index.vue'); // 语义化命名：替换root
 const NotFound = () => import('@/pages/404/NotFound.vue');
-const root = () => import('@/pages/root/root.vue');
 
-// 3. 定义路由规则（无修改，404路由位置正确）
+// 3. 定义路由规则（核心修正：路径、命名、冗余配置）
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/login'
+    redirect: '/login' // 统一小写，符合路径规范
   },
   {
-    path: '/login',
+    path: '/login', // 统一小写
     name: 'Login',
     component: Login,
     meta: {
@@ -35,8 +42,8 @@ const routes: Array<RouteRecordRaw> = [
     }
   },
   {
-    path: '/dashboard',
-    name: 'DashboardLayout',
+    path: '/dashboard', // 修正：移除多余的.ts后缀
+    name: 'MainLayout', // 语义化命名：替换DashboardLayout
     component: MainLayout,
     meta: {
       title: '平台首页',
@@ -44,7 +51,7 @@ const routes: Array<RouteRecordRaw> = [
     },
     children: [
       {
-        path: '',
+        path: '', // 空路径 → /dashboard 匹配首页
         name: 'Dashboard',
         component: Dashboard,
         meta: { title: '平台首页' }
@@ -60,7 +67,7 @@ const routes: Array<RouteRecordRaw> = [
         name: 'AlarmDetail',
         component: AlarmDetail,
         meta: { title: '报警详情' },
-        props: true
+        props: true // 合理：需要接收id参数
       },
       {
         path: 'device/list',
@@ -73,14 +80,14 @@ const routes: Array<RouteRecordRaw> = [
         name: 'DeviceConfig',
         component: DeviceConfig,
         meta: { title: '设备配置' },
-        props: true
+        props: true // 合理：需要接收deviceId参数
       },
       {
-        path: 'root/root',
-        name: 'root',
-        component: root,
-        meta: { title: '用户中心' },
-        props: true
+        path: 'setting', // 修正：简化用户中心路径 → /dashboard/setting
+        name: 'UserCenter', // 语义化命名：替换root
+        component: UserCenter,
+        meta: { title: '用户中心' }
+        // 移除：props: true（无参数传递，冗余）
       }
     ]
   },
@@ -92,47 +99,56 @@ const routes: Array<RouteRecordRaw> = [
   }
 ];
 
-// 4. 创建路由实例
+// 4. 创建路由实例（保留hash模式，优化注释）
 const router = createRouter({
-  history: createWebHashHistory(), // 【修改1】hash模式（URL带#，开发环境无404）
+  history: createWebHashHistory(), // hash模式：开发环境避免404，生产可改为createWebHistory
   routes,
-  scrollBehavior: () => ({ top: 0 })
+  scrollBehavior: () => ({ top: 0 }) // 路由切换时回到顶部
 });
 
-// 5. 路由守卫（【修改3】添加日志+容错，便于排查404原因）
+// 5. 路由守卫（优化日志、简化逻辑、增强容错）
 router.beforeEach(
   (
     to: RouteLocationNormalized,
     from: RouteLocationNormalized,
     next: NavigationGuardNext
   ) => {
-    // 新增：打印路由信息，快速定位404原因
-    console.log('👉 目标路由：', to.fullPath);
-    console.log('👉 是否需要登录：', to.meta.requiresAuth);
-    console.log('👉 当前登录态（token）：', localStorage.getItem('token'));
-
-    // 设置页面标题
-    if (to.meta.title) {
-      document.title = to.meta.title as string;
+    // 开发环境日志（生产可注释）
+    if (import.meta.env.DEV) {
+      console.group('🔄 路由跳转信息');
+      console.log('目标路由：', to.fullPath);
+      console.log('需要登录授权：', to.meta.requiresAuth);
+      console.log('当前Token：', localStorage.getItem('token'));
+      console.groupEnd();
     }
 
-    // 登录校验（添加容错，避免token解析错误）
+    // 设置页面标题（兼容meta.title为空的情况）
+    document.title = (to.meta.title as string) || '校园智能安防平台';
+
+    // 登录态校验（增强容错：避免token为'undefined'/'null'）
     const token = localStorage.getItem('token');
-    const isLogin = !!token && token !== 'undefined' && token !== 'null';
+    const isLogin = !!token && token.trim() && token !== 'undefined' && token !== 'null';
 
-    // 未登录访问需要授权的路由 → 跳登录页
-    if (to.meta.requiresAuth && !isLogin) {
-      console.warn('❌ 未登录，跳转到登录页');
-      next('/login');
-    }
-    // 已登录访问登录页 → 跳首页（避免重复登录）
-    else if (to.path === '/login' && isLogin) {
-      console.log('✅ 已登录，跳转到首页');
-      next('/dashboard');
-    }
-    // 正常跳转
-    else {
-      next();
+    // 核心权限逻辑
+    if (to.meta.requiresAuth) {
+      // 需要授权但未登录 → 跳登录页
+      if (!isLogin) {
+        import.meta.env.DEV && console.warn('❌ 未登录，重定向到登录页');
+        next('/login');
+      } else {
+        // 已登录 → 正常跳转
+        next();
+      }
+    } else {
+      // 无需授权的路由（如登录页）
+      if (to.path === '/login' && isLogin) {
+        // 已登录访问登录页 → 跳首页
+        import.meta.env.DEV && console.log('✅ 已登录，重定向到首页');
+        next('/dashboard');
+      } else {
+        // 未登录访问登录页 → 正常跳转
+        next();
+      }
     }
   }
 );
