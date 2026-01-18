@@ -94,13 +94,6 @@ import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { addDevice, AddDeviceParams } from '@/api/device';
 
-// 定义API响应类型
-interface ApiResponse<T = any> {
-  code: number;
-  msg?: string;
-  data: T;
-}
-
 // 路由实例
 const router = useRouter();
 
@@ -176,10 +169,14 @@ const submitForm = async () => {
   submitting.value = true;
 
   try {
-    // 使用类型断言来处理API响应
-    const response = (await addDevice(submitData)) as ApiResponse;
+    // 使用 unknown 类型进行中间转换
+    const response: any = await addDevice(submitData);
 
-    if (response.code === 200) {
+    // 从响应中获取code和msg
+    const code = response.code;
+    const msg = response.msg;
+
+    if (code === 200) {
       ElMessage.success('设备添加成功！');
 
       // 询问是否继续添加
@@ -200,7 +197,7 @@ const submitForm = async () => {
         router.push({ name: 'DeviceList' });
       }
     } else {
-      ElMessage.error(response.msg || '设备添加失败');
+      ElMessage.error(msg || '设备添加失败');
     }
   } catch (error: any) {
     console.error('添加设备失败：', error);
