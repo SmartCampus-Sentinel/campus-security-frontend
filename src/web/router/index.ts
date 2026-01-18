@@ -15,7 +15,7 @@ import {
 // src/web/pages/alarm/List.vue | Detail.vue
 // src/web/pages/setting/Index.vue（用户中心）
 // src/web/pages/404/NotFound.vue
-// src/web/pages/device/List.vue | Config.vue
+// src/web/pages/device/List.vue | Config.vue | Add.vue
 const MainLayout = () => import('@/layouts/MainLayout.vue');
 const Login = () => import('@/pages/login/Login.vue'); // 统一文件夹小写
 const Dashboard = () => import('@/pages/dashboard/Index.vue');
@@ -23,6 +23,7 @@ const AlarmList = () => import('@/pages/alarm/List.vue');
 const AlarmDetail = () => import('@/pages/alarm/Detail.vue');
 const DeviceList = () => import('@/pages/device/List.vue');
 const DeviceConfig = () => import('@/pages/device/Config.vue');
+const DeviceAdd = () => import('@/pages/device/Add.vue'); // 新增：添加设备页面
 const UserCenter = () => import('@/pages/setting/Index.vue'); // 语义化命名：替换root
 const NotFound = () => import('@/pages/404/NotFound.vue');
 
@@ -74,6 +75,12 @@ const routes: Array<RouteRecordRaw> = [
         name: 'DeviceList',
         component: DeviceList,
         meta: { title: '设备列表' }
+      },
+      {
+        path: 'device/add', // 新增：添加设备页面
+        name: 'DeviceAdd',
+        component: DeviceAdd,
+        meta: { title: '添加设备' }
       },
       {
         path: 'device/config/:deviceId',

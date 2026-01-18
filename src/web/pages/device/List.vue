@@ -22,6 +22,7 @@
           <el-button type="primary" @click="fetchDeviceList">查询</el-button>
           <el-button @click="resetSearch">重置</el-button>
           <el-button type="success" @click="exportDeviceList">导出</el-button>
+          <el-button type="warning" @click="goToAddDevice">添加设备</el-button> <!-- 新增：添加设备按钮 -->
         </el-form-item>
       </el-form>
     </el-card>
@@ -123,6 +124,11 @@ const resetSearch = () => {
 // 跳设备配置页
 const goDeviceConfig = (id: string) => {
   router.push({ name: 'DeviceConfig', params: { deviceId: id } });
+};
+
+// 跳转到添加设备页面
+const goToAddDevice = () => {
+  router.push({ name: 'DeviceAdd' });
 };
 
 // 刷新设备状态
