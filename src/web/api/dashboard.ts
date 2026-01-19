@@ -1,5 +1,6 @@
 // 导入统一封装的axios实例
 import request from './index';
+import { ApiResponse } from './types';
 
 // ======================== TS类型定义（贴合校园安防场景） ========================
 /**
@@ -56,15 +57,6 @@ export interface DashboardData {
   alarmTrend: AlarmTrend;
   // 设备状态分布（饼图数据）
   deviceStatus: DeviceStatus[];
-}
-
-/**
- * 接口返回通用类型
- */
-export interface ApiResponse<T = any> {
-  code: number;
-  msg: string;
-  data: T;
 }
 
 // ======================== 接口封装（贴合校园安防业务） ========================

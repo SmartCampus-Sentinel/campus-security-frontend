@@ -21,36 +21,7 @@
 import { ref } from 'vue';
 import { ElMessage, ElForm } from 'element-plus';
 import { useRouter } from 'vue-router';
-import { login } from '@/api/login'; // 后续封装接口
-
-
-// ========== 1. 临时模拟登录接口（替代@/api/auth，避免接口未实现报错） ==========
-// 定义接口类型（规范入参和返回值）
-interface LoginParams {
-  username: string;
-  password: string;
-  type: number;
-}
-interface LoginRes {
-  data: {
-    token: string;
-    username: string;
-  };
-}
-// 模拟登录接口（实际项目中替换为真实接口导入）
-const login = async (params: LoginParams): Promise<LoginRes> => {
-  // 初始账号密码：admin / 123456
-  if (params.username === 'admin' && params.password === '123456') {
-    return {
-      data: {
-        token: 'mock-token-' + Date.now(), // 模拟生成token
-        username: params.username
-      }
-    };
-  } else {
-    throw new Error('用户名或密码错误');
-  }
-};
+import { login } from '@/api/login'; // 使用真实的登录API
 
 // ========== 2. 表单相关配置（添加初始密码） ==========
 const formRef = ref<InstanceType<typeof ElForm>>();
@@ -86,12 +57,12 @@ const handleLogin = async () => {
 
     // 存储token和用户信息
     localStorage.setItem('token', res.data.token);
-    localStorage.setItem('username', res.data.username);
+    localStorage.setItem('username', form.value.username);
     ElMessage.success('登录成功！即将跳转到首页');
 
     // 跳转到首页
     setTimeout(() => {
-      router.push('/dashboard.ts').catch(err => console.warn('路由跳转失败:', err));
+      router.push('/dashboard').catch(err => console.warn('路由跳转失败:', err));
     }, 1000);
 
   } catch (err: any) {

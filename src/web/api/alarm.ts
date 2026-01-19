@@ -1,4 +1,46 @@
 import request from './index';
+import { ApiResponse, PageResponse } from './types';
+
+/**
+ * 报警状态枚举
+ */
+export enum AlarmStatus {
+  PENDING = 0,  // 待处理
+  PROCESSED = 1,  // 已处理
+  IGNORED = 2   // 已忽略
+}
+
+/**
+ * 将前端状态字符串转换为后端枚举值
+ * @param statusStr 前端状态字符串（pending/processed/ignored）
+ * @returns 后端枚举值
+ */
+export function statusStrToEnum(statusStr: string): AlarmStatus {
+  switch (statusStr) {
+    case 'processed':
+      return AlarmStatus.PROCESSED;
+    case 'ignored':
+      return AlarmStatus.IGNORED;
+    default:
+      return AlarmStatus.PENDING;
+  }
+}
+
+/**
+ * 将后端枚举值转换为前端状态字符串
+ * @param statusEnum 后端枚举值
+ * @returns 前端状态字符串（pending/processed/ignored）
+ */
+export function statusEnumToStr(statusEnum: AlarmStatus): string {
+  switch (statusEnum) {
+    case AlarmStatus.PROCESSED:
+      return 'processed';
+    case AlarmStatus.IGNORED:
+      return 'ignored';
+    default:
+      return 'pending';
+  }
+}
 
 /**
  * 报警类型定义（TS类型约束）
@@ -11,7 +53,8 @@ export interface AlarmItem {
   alarmLevel: 1 | 2 | 3; // 报警级别（1-低 2-中 3-高）
   alarmTime: string; // 报警时间
   location: string; // 报警位置
-  handleStatus: 0 | 1; // 0-未处理 1-已处理
+  handleStatus: AlarmStatus; // 处理状态
+  status?: string; // 前端状态字段（用于List.vue的状态显示）
   handlePerson?: string; // 处理人
   handleTime?: string; // 处理时间
   handleDesc?: string; // 处理说明
@@ -36,7 +79,7 @@ export interface AlarmStats {
 /**
  * 获取报警列表（支持分页、筛选）
  * @param params 分页+筛选参数
- * @returns 报警列表 + 总数
+ * @returns 分页报警列表
  */
 export function getAlarmList(params: {
   pageNum: number;
@@ -46,7 +89,7 @@ export function getAlarmList(params: {
   handleStatus?: number; // 处理状态筛选
   startTime?: string; // 开始时间
   endTime?: string; // 结束时间
-}) {
+}): Promise<ApiResponse<PageResponse<AlarmItem>>> {
   return request({
     url: '/api/alarm/list',
     method: 'get',
@@ -60,7 +103,7 @@ export function getAlarmList(params: {
  * @param id 报警ID
  * @returns 报警完整信息
  */
-export function getAlarmDetail(id: string) {
+export function getAlarmDetail(id: string): Promise<ApiResponse<AlarmItem>> {
   return request({
     url: `/api/alarm/detail/${id}`,
     method: 'get',
@@ -75,16 +118,14 @@ export function getAlarmDetail(id: string) {
  */
 export function handleAlarm(params: {
   id: string;
-  handleStatus: 1; // 标记为已处理
-  handleDesc: string; // 处理说明
-}) {
+  handleStatus: AlarmStatus; // 处理状态（支持所有枚举值）
+  handleDesc?: string; // 处理说明（可选）
+  handlePerson?: string; // 处理人（可选）
+}): Promise<ApiResponse<null>> {
   return request({
     url: `/api/alarm/handle/${params.id}`,
     method: 'post',
-    data: {
-      handleStatus: params.handleStatus,
-      handleDesc: params.handleDesc
-    },
+    data: params,
     headers: { hideLoading: false }
   });
 }
@@ -93,7 +134,7 @@ export function handleAlarm(params: {
  * 获取报警统计数据（适配dashboard）
  * @returns 今日报警数、未处理数、趋势、类型分布
  */
-export function getAlarmStats() {
+export function getAlarmStats(): Promise<ApiResponse<AlarmStats>> {
   return request({
     url: '/api/alarm/stats',
     method: 'get',
@@ -105,7 +146,7 @@ export function getAlarmStats() {
  * 获取今日报警趋势（适配dashboard图表）
  * @returns 按小时统计的报警数
  */
-export function getTodayAlarmTrend() {
+export function getTodayAlarmTrend(): Promise<ApiResponse<AlarmStats['todayTrend']>> {
   return request({
     url: '/api/alarm/trend/today',
     method: 'get',
@@ -122,12 +163,48 @@ export function exportAlarmData(params: {
   startTime?: string;
   endTime?: string;
   handleStatus?: number;
-}) {
+}): Promise<Blob> {
   return request({
     url: '/api/alarm/export',
     method: 'get',
     params,
     responseType: 'blob', // 导出文件需指定响应类型
+    headers: { hideLoading: false }
+  });
+}
+
+/**
+ * 更新报警状态（用于List.vue的快速操作）
+ * @param id 报警ID
+ * @param status 前端状态字符串（pending/processed/ignored）
+ * @returns 操作结果
+ */
+export function updateAlarmStatus(id: string, status: string): Promise<ApiResponse<null>> {
+  // 使用统一的状态转换函数
+  const handleStatus = statusStrToEnum(status);
+  
+  return request({
+    url: `/api/alarm/handle/${id}`,
+    method: 'post',
+    data: { handleStatus },
+    headers: { hideLoading: false }
+  });
+}
+
+/**
+ * 批量处理报警
+ * @param params 批量处理参数
+ * @returns 操作结果
+ */
+export function batchHandleAlarm(params: {
+  ids: string[]; // 报警ID列表
+  handleStatus: AlarmStatus; // 处理状态
+  handleDesc?: string; // 处理说明（可选）
+}): Promise<ApiResponse<null>> {
+  return request({
+    url: '/api/alarm/batch-handle',
+    method: 'post',
+    data: params,
     headers: { hideLoading: false }
   });
 }

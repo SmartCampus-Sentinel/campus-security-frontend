@@ -17,20 +17,9 @@
 
 <script setup lang="ts">
 
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref } from 'vue';
 import { House, Monitor, Warning, User } from '@element-plus/icons-vue';
 import Sidebar from '@/components/Sidebar.vue'; // 引入侧边栏组件
-
-// 侧边栏折叠状态（从本地存储读取）
-const isCollapse = ref<boolean>(localStorage.getItem('sidebarCollapse') === 'true');
-
-// 切换侧边栏折叠状态
-const handleCollapse = () => {
-  isCollapse.value = !isCollapse.value;
-  // 同步到本地存储
-  localStorage.setItem('sidebarCollapse', isCollapse.value.toString());
-};
 
 // 定义菜单项类型
 interface MenuItem {
@@ -41,12 +30,11 @@ interface MenuItem {
   permission?: string;
 }
 
-// 控制侧边栏收起状态
-const isCollapsed = ref(false);
+// 控制侧边栏收起状态（从本地存储读取）
+const isCollapsed = ref<boolean>(localStorage.getItem('sidebarCollapse') === 'true');
 
 // 用户权限（示例）
 const userPermissions = ref<string[]>(['admin', 'device_manager', 'alarm_manager', 'user_center_view'])
-
 
 // 菜单项配置
 const menuItems: MenuItem[] = [
@@ -70,7 +58,6 @@ const menuItems: MenuItem[] = [
     index: '/dashboard/setting',
     title: '用户中心',
     icon: User,
-    iconColor: 'red',
     permission: 'user_center_view'
   }
 ];
@@ -78,6 +65,8 @@ const menuItems: MenuItem[] = [
 // 处理侧边栏收起状态变化
 const handleCollapseChange = (value: boolean) => {
   isCollapsed.value = value;
+  // 同步到本地存储
+  localStorage.setItem('sidebarCollapse', value.toString());
 };
 </script>
 

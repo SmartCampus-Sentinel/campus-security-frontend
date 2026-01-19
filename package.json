@@ -6,8 +6,7 @@
   "scripts": {
     "dev:web": "vite serve --mode development",
     "build:web": "vite build --mode production --outDir dist/web",
-    "preview:web": "vite preview --port 5174",
-    "lint": "eslint . --ext .vue,.js,.ts --fix"
+    "preview:web": "vite preview --port 5174"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
@@ -31,10 +30,19 @@
     "@typescript-eslint/parser": "7.2.0",
     "@vitejs/plugin-vue": "5.0.4",
     "eslint": "8.57.0",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-vue": "9.23.0",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.8.0",
     "typescript": "5.4.2",
     "vite": "5.1.6",
     "vite-plugin-svg-icons": "^2.0.1",
     "vue-tsc": "2.0.6"
+  },
+  "lint-staged": {
+    "*.{css,scss,less,json,md}": [
+      "prettier --write"
+    ]
   }
 }

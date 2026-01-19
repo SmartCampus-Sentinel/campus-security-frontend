@@ -57,7 +57,7 @@
               v-if="scope.row.status === 'pending'"
               type="success"
               size="small"
-              @click="updateAlarmStatus(scope.row.id, 'processed')"
+              @click="handleUpdateAlarmStatus(scope.row.id, 'processed')"
             >
               标记已处理
             </el-button>
@@ -65,7 +65,7 @@
               v-if="scope.row.status === 'pending'"
               type="info"
               size="small"
-              @click="updateAlarmStatus(scope.row.id, 'ignored')"
+              @click="handleUpdateAlarmStatus(scope.row.id, 'ignored')"
             >
               忽略
             </el-button>
@@ -148,7 +148,7 @@ const goAlarmDetail = (id: string) => {
 };
 
 // 更新报警状态
-const updateAlarmStatus = async (id: string, status: string) => {
+const handleUpdateAlarmStatus = async (id: string, status: string) => {
   try {
     await updateAlarmStatus(id, status);
     ElMessage.success(`报警已${status === 'processed' ? '标记为已处理' : '忽略'}`);
