@@ -61,6 +61,7 @@ import { useRouter } from 'vue-router';
 import { User, Lock } from '@element-plus/icons-vue';
 import { login } from '@/api/login'; // 使用真实的登录API
 import { useWebSocket } from '@/utils/websocketManager'; // 导入WebSocket管理器
+import { startAutoLogout, stopAutoLogout } from '@/utils/autoLogout'; // 导入自动登出工具
 
 // 定义通知类型
 interface SystemNotification {

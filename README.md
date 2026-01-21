@@ -77,7 +77,42 @@
 #### 2.5.3 Git 提交规范
 - 提交前手动运行ESLint和Prettier进行代码检查和格式化
 
-## 3. 目录结构
+## 3. 登录功能
+
+### 3.1 登录流程概述
+- **登录页面**: `src/web/pages/login/Login.vue`
+- **登录API**: `src/web/api/login.ts`
+- **工作流程**:
+  1. 用户在登录页输入用户名和密码
+  2. 前端表单校验（用户名3-20字符、密码6-20字符）
+  3. 提交到后端 `POST /api/auth/login` 接口
+  4. 后端验证凭证并返回token、userId、username
+  5. 前端存储凭证到localStorage
+  6. 自动跳转到仪表板页面
+
+### 3.2 API请求与响应
+- **请求格式**:
+  ```json
+  {
+    "username": "admin",
+    "password": "123456",
+    "type": 1
+  }
+  ```
+- **响应拦截器** (`src/web/api/index.ts`):
+  - 自动提取`response.data`字段
+  - 自定义错误码处理（400、401、403、404、500等）
+  - 401错误自动清除token并跳转登录页
+- **响应格式**: 后端返回 `{ code: 200, data: { token, userId, username } }` 被拦截器提取为 `{ token, userId, username }`
+
+### 3.3 登录状态与安全
+- **Token存储**: `localStorage.token` - 后续API请求自动附加到Authorization header
+- **用户信息**: `localStorage.username` 和 `localStorage.userId`
+- **记住密码**: 可选存储凭据到localStorage（生产环境建议加密）
+- **账户锁定**: 登录失败5次后锁定15分钟
+- **事务管理**: 后端使用`@Transactional`注解确保登录查询的数据一致性
+
+## 4. 目录结构
 
 ```
 .

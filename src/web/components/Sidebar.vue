@@ -56,13 +56,25 @@
     </div>
 
     <!-- 收起/展开按钮 -->
-    <div class="collapse-toggle" @click="toggleCollapse">
+    <div class="sidebar-footer">
+      <el-button
+        type="danger"
+        :icon="LogOut"
+        size="small"
+        circle
+        class="logout-btn"
+        @click="handleLogout"
+        :title="isCollapsed ? '登出' : ''"
+      >
+        <span v-if="!isCollapsed">登出</span>
+      </el-button>
       <el-button
         type="primary"
         :icon="isCollapsed ? ArrowRight : ArrowLeft"
         size="small"
         circle
         class="collapse-btn"
+        @click="toggleCollapse"
         :tooltip="isCollapsed ? '展开侧边栏' : '收起侧边栏'"
       />
     </div>
@@ -71,8 +83,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRoute } from 'vue-router';
-import { House, Monitor, Warning, User, ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
+import { useRoute, useRouter } from 'vue-router';
+import { House, Monitor, Warning, User, ArrowLeft, ArrowRight, LogOut } from '@element-plus/icons-vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { stopAutoLogout } from '@/utils/autoLogout';
 
 // 定义菜单项类型
 interface MenuItem {
@@ -122,6 +136,50 @@ const menuItems = computed(() => {
 // 切换收起/展开状态
 const toggleCollapse = () => {
   emit('update:isCollapsed', !props.isCollapsed);
+};
+
+// 获取router
+const router = useRouter();
+
+// 处理登出
+const handleLogout = async () => {
+  try {
+    // 显示确认对话框
+    await ElMessageBox.confirm(
+      '确定要退出登录吗？',
+      '确认退出',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    // 停止自动登出监听
+    stopAutoLogout();
+
+    // 清除本地存储的登录信息
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('currentUserId');
+    localStorage.removeItem('sidebarCollapse');
+
+    ElMessage.success('登出成功');
+
+    // 跳转到登录页面
+    setTimeout(() => {
+      router.push('/login').catch(err => console.warn('路由跳转失败:', err));
+    }, 500);
+  } catch (err: any) {
+    // 用户点击取消按钮
+    if (err.message === 'cancel') {
+      return;
+    }
+    console.error('登出失败:', err);
+    ElMessage.error('登出失败，请稍后重试');
+  }
 };
 </script>
 
@@ -301,25 +359,40 @@ const toggleCollapse = () => {
   color: var(--sidebar-active-color);
 }
 
-/* 收起/展开按钮 */
-.collapse-toggle {
+/* 侧边栏底部（登出和收起按钮） */
+.sidebar-footer {
   position: absolute;
-  right: -12px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-  cursor: pointer;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  padding: 0 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
   transition: all var(--transition-duration) ease;
 }
 
+.logout-btn {
+  flex: 1;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.logout-btn :deep(.el-icon) {
+  font-size: 16px;
+}
+
 .collapse-btn {
-  width: 24px;
-  height: 48px;
-  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  width: 36px;
+  height: 36px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+}
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
 }
@@ -366,15 +439,6 @@ const toggleCollapse = () => {
 
   .sidebar.sidebar-collapsed {
     transform: translateX(-100%);
-  }
-
-  .collapse-toggle {
-    left: 100%;
-    right: auto;
-  }
-
-  .collapse-btn {
-    border-radius: 0 var(--border-radius) var(--border-radius) 0;
   }
 }
 

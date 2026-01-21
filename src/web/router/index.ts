@@ -6,6 +6,7 @@ import {
   NavigationGuardNext,
   RouteLocationNormalized
 } from 'vue-router';
+import { startAutoLogout, stopAutoLogout } from '@/utils/autoLogout';
 
 // 2. 导入页面/布局组件（统一路径规范：文件夹小写、组件首字母大写，语义化命名）
 // 注意：确保文件实际路径与导入路径一致：
@@ -55,46 +56,45 @@ const routes: Array<RouteRecordRaw> = [
         path: '', // 空路径 → /dashboard 匹配首页
         name: 'Dashboard',
         component: Dashboard,
-        meta: { title: '平台首页' }
+        meta: { title: '平台首页', requiresAuth: true }
       },
       {
         path: 'alarm/list',
         name: 'AlarmList',
         component: AlarmList,
-        meta: { title: '报警列表' }
+        meta: { title: '报警列表', requiresAuth: true }
       },
       {
         path: 'alarm/detail/:id',
         name: 'AlarmDetail',
         component: AlarmDetail,
-        meta: { title: '报警详情' },
+        meta: { title: '报警详情', requiresAuth: true },
         props: true // 合理：需要接收id参数
       },
       {
         path: 'device/list',
         name: 'DeviceList',
         component: DeviceList,
-        meta: { title: '设备列表' }
+        meta: { title: '设备列表', requiresAuth: true }
       },
       {
         path: 'device/add', // 新增：添加设备页面
         name: 'DeviceAdd',
         component: DeviceAdd,
-        meta: { title: '添加设备' }
+        meta: { title: '添加设备', requiresAuth: true }
       },
       {
         path: 'device/config/:deviceId',
         name: 'DeviceConfig',
         component: DeviceConfig,
-        meta: { title: '设备配置' },
+        meta: { title: '设备配置', requiresAuth: true },
         props: true // 合理：需要接收deviceId参数
       },
       {
         path: 'setting', // 修正：简化用户中心路径 → /dashboard/setting
         name: 'UserCenter', // 语义化命名：替换root
         component: UserCenter,
-        meta: { title: '用户中心' }
-        // 移除：props: true（无参数传递，冗余）
+        meta: { title: '用户中心', requiresAuth: true }
       }
     ]
   },
@@ -141,9 +141,11 @@ router.beforeEach(
       // 需要授权但未登录 → 跳登录页
       if (!isLogin) {
         import.meta.env.DEV && console.warn('❌ 未登录，重定向到登录页');
+        stopAutoLogout(); // 停止自动登出监听
         next('/login');
       } else {
         // 已登录 → 正常跳转
+        startAutoLogout(); // 启动自动登出监听
         next();
       }
     } else {
@@ -151,9 +153,11 @@ router.beforeEach(
       if (to.path === '/login' && isLogin) {
         // 已登录访问登录页 → 跳首页
         import.meta.env.DEV && console.log('✅ 已登录，重定向到首页');
+        startAutoLogout(); // 启动自动登出监听
         next('/dashboard');
       } else {
-        // 未登录访问登录页 → 正常跳转
+        // 未登录访问登录页 → 停止自动登出监听
+        stopAutoLogout();
         next();
       }
     }
