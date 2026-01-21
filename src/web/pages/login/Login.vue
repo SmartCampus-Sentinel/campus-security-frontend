@@ -281,18 +281,18 @@ const handleLogin = async () => {
       type: 1, // 1=管理员
     });
 
-    // 检查响应数据
-    if (!res || !res.data || !res.data.token) {
+    // 检查响应数据（响应拦截器已返回res.data，所以这里res就是data对象）
+    if (!res || !res.token) {
       throw new Error('登录响应数据异常');
     }
 
     // 存储token和用户信息
-    localStorage.setItem('token', res.data.token);
+    localStorage.setItem('token', res.token);
     localStorage.setItem('username', form.value.username);
     
     // 如果有用户ID，也存储起来
-    if (res.data.userId) {
-      localStorage.setItem('userId', res.data.userId);
+    if (res.userId) {
+      localStorage.setItem('userId', res.userId);
     }
     
     // 保存记住的凭据
