@@ -16,10 +16,10 @@
 </template>
 
 <script setup lang="ts">
-
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { House, Monitor, Warning, User } from '@element-plus/icons-vue';
 import Sidebar from '@/components/Sidebar.vue'; // 引入侧边栏组件
+import { useWebSocket } from '@/utils/websocketManager'; // 引入WebSocket管理器
 
 // 定义菜单项类型
 interface MenuItem {
@@ -34,7 +34,7 @@ interface MenuItem {
 const isCollapsed = ref<boolean>(localStorage.getItem('sidebarCollapse') === 'true');
 
 // 用户权限（示例）
-const userPermissions = ref<string[]>(['admin', 'device_manager', 'alarm_manager', 'user_center_view'])
+const userPermissions = ref<string[]>(['admin', 'device_manager', 'alarm_manager', 'user_center_view']);
 
 // 菜单项配置
 const menuItems: MenuItem[] = [
@@ -68,6 +68,91 @@ const handleCollapseChange = (value: boolean) => {
   // 同步到本地存储
   localStorage.setItem('sidebarCollapse', value.toString());
 };
+
+// 初始化WebSocket连接
+const { connect, disconnect, onMessage, isConnected } = useWebSocket();
+
+// 获取用户ID（从localStorage或其他地方获取）
+const getCurrentUserId = (): string | null => {
+  // 优先从localStorage直接获取用户ID
+  const userId = localStorage.getItem('userId');
+  if (userId) {
+    return userId;
+  }
+  
+  // 从token中解析用户ID或从localStorage中获取
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      // 解析JWT token获取用户信息
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => 
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join(''));
+      
+      const userData = JSON.parse(jsonPayload);
+      return userData.userId || userData.sub || userData.id || userData.user_id;
+    } catch (e) {
+      console.error('解析token失败:', e);
+      // 如果无法从token解析，尝试从其他地方获取用户ID
+      return localStorage.getItem('currentUserId');
+    }
+  }
+  return null;
+};
+
+// 监听登录状态变化
+const handleLoginStatusChange = () => {
+  const userId = getCurrentUserId();
+  if (userId) {
+    // 用户已登录，连接WebSocket
+    connect(userId, {
+      onOpen: (event) => {
+        console.log('WebSocket连接已打开', event);
+      },
+      onClose: (event) => {
+        console.log('WebSocket连接已关闭', event);
+      },
+      onError: (event) => {
+        console.error('WebSocket连接发生错误', event);
+      },
+      onMessage: (event) => {
+        console.log('收到WebSocket消息', event.data);
+      }
+    });
+
+    // 监听报警消息
+    onMessage('alarm', (data) => {
+      console.log('收到报警消息:', data);
+      // 在这里可以处理报警消息，比如显示通知
+    });
+  } else {
+    // 用户未登录，断开WebSocket
+    disconnect();
+  }
+};
+
+onMounted(() => {
+  // 页面加载时根据登录状态连接或断开WebSocket
+  handleLoginStatusChange();
+  
+  // 监听storage事件，以响应其他标签页的登录/登出操作
+  const storageHandler = (e: StorageEvent) => {
+    if (e.key === 'token' || e.key === 'userId') {
+      handleLoginStatusChange();
+    }
+  };
+  window.addEventListener('storage', storageHandler);
+});
+
+onUnmounted(() => {
+  // 页面卸载时断开连接
+  disconnect();
+  
+  // 移除事件监听器
+  window.removeEventListener('storage', storageHandler);
+});
 </script>
 
 <style scoped>

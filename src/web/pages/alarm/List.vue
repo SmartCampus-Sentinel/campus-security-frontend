@@ -88,13 +88,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElNotification } from 'element-plus';
 import { getAlarmList, updateAlarmStatus } from '@/api/alarm';
+import { useWebSocket } from '@/utils/websocketManager';
 
 // 路由实例
 const router = useRouter();
+
+// WebSocket连接
+const { onMessage, offMessage } = useWebSocket();
+
 // 查询表单
 const searchForm = ref({
   alarmId: '',
@@ -158,9 +163,39 @@ const handleUpdateAlarmStatus = async (id: string, status: string) => {
   }
 };
 
-// 页面挂载时加载列表
+// 处理实时报警消息
+const handleRealtimeAlarm = (alarmData: any) => {
+  console.log('收到实时报警消息:', alarmData);
+  
+  // 显示通知
+  ElNotification({
+    title: '新报警',
+    message: `设备 ${alarmData.deviceName || '未知'} 发生 ${alarmData.alarmType || '未知'} 报警`,
+    type: 'warning',
+    duration: 0, // 不自动关闭
+    onClick: () => {
+      // 点击通知跳转到详情页
+      if (alarmData.id) {
+        goAlarmDetail(alarmData.id);
+      }
+    }
+  });
+
+  // 刷新列表
+  fetchAlarmList();
+};
+
+// 页面挂载时加载列表并监听WebSocket消息
 onMounted(() => {
   fetchAlarmList();
+  
+  // 监听实时报警消息
+  onMessage('alarm', handleRealtimeAlarm);
+});
+
+// 页面卸载时移除监听器
+onUnmounted(() => {
+  offMessage('alarm', handleRealtimeAlarm);
 });
 </script>
 

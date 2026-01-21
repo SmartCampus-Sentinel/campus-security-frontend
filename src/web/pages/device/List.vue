@@ -76,7 +76,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { getDeviceList, refreshDeviceStatus, exportDeviceList } from '@/api/device';
+import { getDeviceInfoList, refreshDeviceStatus, exportDeviceList } from '@/api/device';
 
 // 路由实例
 const router = useRouter();
@@ -98,13 +98,15 @@ const deviceList = ref([]);
 // 获取设备列表
 const fetchDeviceList = async () => {
   try {
-    const res = await getDeviceList({
-      ...searchForm.value,
+    const res = await getDeviceInfoList({
       pageNum: pagination.value.pageNum,
-      pageSize: pagination.value.pageSize
+      pageSize: pagination.value.pageSize,
+      deviceName: searchForm.value.deviceName,
+      deviceType: searchForm.value.deviceType,
+      status: searchForm.value.status === 'online' ? 1 : searchForm.value.status === 'offline' ? 0 : undefined
     });
-    deviceList.value = res.data.list;
-    pagination.value.total = res.data.total;
+    deviceList.value = res.data.list || res.data;
+    pagination.value.total = res.data.total || res.data.length || 0;
   } catch (error) {
     console.error('获取设备列表失败：', error);
   }

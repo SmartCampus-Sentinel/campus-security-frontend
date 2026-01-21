@@ -39,7 +39,7 @@ const routes: Array<RouteRecordRaw> = [
     component: Login,
     meta: {
       title: '管理员登录',
-      requiresAuth: false
+      requiresAuth: false // 登录页无需认证
     }
   },
   {
@@ -48,7 +48,7 @@ const routes: Array<RouteRecordRaw> = [
     component: MainLayout,
     meta: {
       title: '平台首页',
-      requiresAuth: true
+      requiresAuth: true // 首页及子路由均需认证
     },
     children: [
       {

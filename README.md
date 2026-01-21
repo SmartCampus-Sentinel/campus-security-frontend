@@ -175,11 +175,16 @@
      ```
    - 修改核心配置
      ```env
+     # 本地开发端口（默认5173）
+     VITE_PORT=5173
      # 后端接口基础地址
      VITE_API_BASE_URL=http://localhost:8080/api
-     
+     # 代理目标地址（用于解决跨域问题）
+     VITE_API_TARGET=http://localhost:8080
      # WebSocket连接地址（实时报警推送）
      VITE_WS_BASE_URL=ws://localhost:8080/ws
+     # WebSocket代理目标地址
+     VITE_WS_TARGET=ws://localhost:8080
      ```
 
 5. **启动后端服务**
@@ -197,7 +202,13 @@
 
 2. 访问应用
    - 默认访问地址：http://localhost:5173
-   - 可以在 `vite.config.ts` 中修改端口配置
+   - 端口可通过 `.env.development` 中的 `VITE_PORT` 变量自定义
+   - 如需允许外部访问，可在 `vite.config.ts` 中确认 `host: '0.0.0.0'` 配置
+
+3. 端口配置说明
+   - 前端开发服务器端口：由 `VITE_PORT` 环境变量控制，默认为 5173
+   - 后端API代理：配置了 `/api` 和 `/ws` 路径代理到后端服务器
+   - 自动端口切换：如果指定端口被占用，会自动尝试下一个可用端口
 
 #### 小程序端
 1. 打开HBuilderX，导入项目根目录下的 `src/miniprogram` 文件夹

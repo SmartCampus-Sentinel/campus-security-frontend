@@ -91,7 +91,7 @@ export function getAlarmList(params: {
   endTime?: string; // 结束时间
 }): Promise<ApiResponse<PageResponse<AlarmItem>>> {
   return request({
-    url: '/api/alarm/list',
+    url: '/alarm-event/list',
     method: 'get',
     params,
     headers: { hideLoading: false }
@@ -105,7 +105,7 @@ export function getAlarmList(params: {
  */
 export function getAlarmDetail(id: string): Promise<ApiResponse<AlarmItem>> {
   return request({
-    url: `/api/alarm/detail/${id}`,
+    url: `/alarm-event/${id}`,
     method: 'get',
     headers: { hideLoading: false }
   });
@@ -123,7 +123,7 @@ export function handleAlarm(params: {
   handlePerson?: string; // 处理人（可选）
 }): Promise<ApiResponse<null>> {
   return request({
-    url: `/api/alarm/handle/${params.id}`,
+    url: `/alarm-event/${params.id}/handle`,
     method: 'post',
     data: params,
     headers: { hideLoading: false }
@@ -136,7 +136,7 @@ export function handleAlarm(params: {
  */
 export function getAlarmStats(): Promise<ApiResponse<AlarmStats>> {
   return request({
-    url: '/api/alarm/stats',
+    url: '/alarm-event/stats',
     method: 'get',
     headers: { hideLoading: true }
   });
@@ -148,7 +148,7 @@ export function getAlarmStats(): Promise<ApiResponse<AlarmStats>> {
  */
 export function getTodayAlarmTrend(): Promise<ApiResponse<AlarmStats['todayTrend']>> {
   return request({
-    url: '/api/alarm/trend/today',
+    url: '/alarm-event/trend/today',
     method: 'get',
     headers: { hideLoading: true }
   });
@@ -165,7 +165,7 @@ export function exportAlarmData(params: {
   handleStatus?: number;
 }): Promise<Blob> {
   return request({
-    url: '/api/alarm/export',
+    url: '/alarm-event/export',
     method: 'get',
     params,
     responseType: 'blob', // 导出文件需指定响应类型
@@ -184,7 +184,7 @@ export function updateAlarmStatus(id: string, status: string): Promise<ApiRespon
   const handleStatus = statusStrToEnum(status);
   
   return request({
-    url: `/api/alarm/handle/${id}`,
+    url: `/alarm-event/${id}/handle`,
     method: 'post',
     data: { handleStatus },
     headers: { hideLoading: false }
@@ -202,9 +202,77 @@ export function batchHandleAlarm(params: {
   handleDesc?: string; // 处理说明（可选）
 }): Promise<ApiResponse<null>> {
   return request({
-    url: '/api/alarm/batch-handle',
+    url: '/alarm-event/batch-handle',
     method: 'post',
     data: params,
     headers: { hideLoading: false }
   });
 }
+
+/**
+ * 报警事件接口
+ */
+export interface AlarmEventItem {
+  id: string;
+  deviceId: string;
+  deviceName: string;
+  alarmType: string;
+  alarmLevel: number; // 1-低 2-中 3-高
+  alarmContent: string;
+  alarmTime: string;
+  status: number; // 0-未处理 1-处理中 2-已处理
+  handler?: string;
+  handleTime?: string;
+}
+
+/**
+ * 报警处置记录接口
+ */
+export interface AlarmDisposalItem {
+  id: string;
+  alarmId: string;
+  handler: string;
+  handleTime: string;
+  handleContent: string;
+  result: number; // 0-失败 1-成功
+}
+
+/**
+ * 获取报警事件列表
+ */
+export const getAlarmEventList = (params?: {
+  pageNum?: number;
+  pageSize?: number;
+  deviceId?: string;
+  alarmType?: string;
+  alarmLevel?: number;
+  status?: number;
+  startTime?: string;
+  endTime?: string;
+}): Promise<ApiResponse<PageResponse<AlarmEventItem>>> => {
+  return request({
+    url: '/alarm-event/list',
+    method: 'get',
+    params,
+    headers: { hideLoading: false }
+  });
+};
+
+/**
+ * 获取报警处置记录列表
+ */
+export const getAlarmDisposalList = (params?: {
+  pageNum?: number;
+  pageSize?: number;
+  alarmId?: string;
+  handler?: string;
+  startTime?: string;
+  endTime?: string;
+}): Promise<ApiResponse<PageResponse<AlarmDisposalItem>>> => {
+  return request({
+    url: '/alarm-disposal/list',
+    method: 'get',
+    params,
+    headers: { hideLoading: false }
+  });
+};

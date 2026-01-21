@@ -12,3 +12,11 @@ export interface PageResponse<T = any> {
   pageNum: number;
   pageSize: number;
 }
+
+// WebSocket相关类型接口
+export interface WebSocketMessage {
+  type: string;
+  data: any;
+  timestamp: number;
+  userId?: string;
+}
