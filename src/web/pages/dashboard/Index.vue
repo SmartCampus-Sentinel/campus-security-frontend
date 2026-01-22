@@ -66,7 +66,7 @@
     <el-card class="alarm-list-card">
       <template #header>
         <span>待处理报警（最近10条）</span>
-        <el-button type="text" @click="$router.push('/dashboard/alarm/list')">查看全部</el-button>
+        <el-button type="text" @click="$router.push({ name: 'AlarmList' })">查看全部</el-button>
       </template>
       <el-table :data="pendingAlarmList" border hover>
         <el-table-column prop="id" label="报警ID" width="80" />

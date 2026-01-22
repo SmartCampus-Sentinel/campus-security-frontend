@@ -22,15 +22,15 @@
         :default-active="defaultActive"
         :collapse="isCollapsed"
         :collapse-transition="false"
-        router
         background-color="transparent"
         text-color="#a0aebf"
         active-text-color="#409eff"
         class="sidebar-menu"
         :unique-opened="true"
+        @select="handleMenuSelect"
       >
         <el-menu-item
-          v-for="item in menuItems"
+          v-for="item in filteredMenuItems"
           :key="item.index"
           :index="item.index"
           class="sidebar-menu-item"
@@ -55,19 +55,22 @@
       </el-menu>
     </div>
 
-    <!-- 收起/展开按钮 -->
+    <!-- 侧边栏底部操作栏 -->
     <div class="sidebar-footer">
+      <!-- 登出按钮 -->
       <el-button
         type="danger"
-        :icon="LogOut"
+        :icon="SwitchButton"
         size="small"
         circle
         class="logout-btn"
         @click="handleLogout"
         :title="isCollapsed ? '登出' : ''"
       >
-        <span v-if="!isCollapsed">登出</span>
+        <span v-if="!isCollapsed" class="logout-text">登出</span>
       </el-button>
+      
+      <!-- 折叠/展开按钮 -->
       <el-button
         type="primary"
         :icon="isCollapsed ? ArrowRight : ArrowLeft"
@@ -75,16 +78,16 @@
         circle
         class="collapse-btn"
         @click="toggleCollapse"
-        :tooltip="isCollapsed ? '展开侧边栏' : '收起侧边栏'"
+        :title="isCollapsed ? '展开侧边栏' : '收起侧边栏'"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { House, Monitor, Warning, User, ArrowLeft, ArrowRight, LogOut } from '@element-plus/icons-vue';
+import { House, Monitor, Warning, User, ArrowLeft, ArrowRight, SwitchButton } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { stopAutoLogout } from '@/utils/autoLogout';
 
@@ -95,6 +98,7 @@ interface MenuItem {
   icon: any;
   iconColor?: string;
   permission?: string; // 权限标识
+  path?: string; // 路由路径
 }
 
 // 定义组件属性
@@ -119,12 +123,32 @@ const emit = defineEmits<Emits>();
 
 // 获取当前路由
 const route = useRoute();
+const router = useRouter();
 
-// 计算当前激活的菜单项
-const defaultActive = computed(() => route.path);
+// 计算当前激活的菜单项（根据路由名称）
+const defaultActive = computed(() => {
+  // 首先尝试使用路由名称
+  const routeName = route.name as string;
+  if (routeName) {
+    // 检查菜单中是否有对应的索引
+    const menuItem = props.menuItems.find(item => item.index === routeName);
+    if (menuItem) {
+      return routeName;
+    }
+  }
+  
+  // 如果路由名称不匹配，尝试使用路径
+  const routePath = route.path;
+  const menuItem = props.menuItems.find(item => item.path === routePath);
+  if (menuItem) {
+    return menuItem.index;
+  }
+  
+  return routeName || '';
+});
 
 // 过滤有权限的菜单项
-const menuItems = computed(() => {
+const filteredMenuItems = computed(() => {
   if (!props.permissions.length) return props.menuItems;
 
   return props.menuItems.filter(item => {
@@ -138,8 +162,52 @@ const toggleCollapse = () => {
   emit('update:isCollapsed', !props.isCollapsed);
 };
 
-// 获取router
-const router = useRouter();
+// 处理菜单选择
+const handleMenuSelect = (index: string) => {
+  // 详细的调试日志（仅开发环境）
+  if (import.meta.env.DEV) {
+    console.group('🔍 菜单选择事件');
+    console.log('点击菜单项索引:', index);
+    console.log('当前路由状态 - name:', route.name, 'path:', route.path);
+    console.log('菜单项总数:', props.menuItems.length);
+    console.log('已过滤菜单项:', filteredMenuItems.value.map(item => ({ index: item.index, path: item.path })));
+    console.groupEnd();
+  }
+
+  const selectedItem = filteredMenuItems.value.find(item => item.index === index);
+  
+  if (!selectedItem) {
+    console.error('❌ 菜单项未找到 - index:', index);
+    return;
+  }
+
+  if (!selectedItem.path) {
+    console.error('❌ 菜单项路径未定义 - index:', index, 'item:', selectedItem);
+    return;
+  }
+
+  // 检查是否已经在该路由上
+  if (route.path === selectedItem.path) {
+    if (import.meta.env.DEV) {
+      console.log('ℹ️ 已在该路由上，无需跳转:', selectedItem.path);
+    }
+    return;
+  }
+
+  // 执行路由导航
+  if (import.meta.env.DEV) {
+    console.log('🚀 导航到路径:', selectedItem.path);
+  }
+
+  router.push(selectedItem.path).then(() => {
+    if (import.meta.env.DEV) {
+      console.log('✅ 导航成功 - 当前路由:', route.name, route.path);
+    }
+  }).catch(err => {
+    console.error('❌ 路由导航失败 - 路径:', selectedItem.path, '错误:', err);
+    ElMessage.error(`导航失败: ${err.message || '未知错误'}`);
+  });
+};
 
 // 处理登出
 const handleLogout = async () => {
@@ -188,19 +256,19 @@ const handleLogout = async () => {
 :root {
   --sidebar-width: 220px;
   --sidebar-collapsed-width: 64px;
-  --sidebar-bg: #2e3b4e;
+  --sidebar-bg: linear-gradient(180deg, #2e3b4e 0%, #1a232e 100%);
   --sidebar-header-bg: #263240;
   --sidebar-text-color: #a0aebf;
   --sidebar-active-color: #409eff;
-  --sidebar-hover-bg: #1f2d3d;
+  --sidebar-hover-bg: rgba(64, 158, 255, 0.1);
   --transition-duration: 0.3s;
-  --border-radius: 4px;
+  --border-radius: 8px;
 }
 
 /* 基础样式 */
 .sidebar {
   width: var(--sidebar-width);
-  background-color: var(--sidebar-bg);
+  background: var(--sidebar-bg);
   color: var(--sidebar-text-color);
   height: 100vh;
   position: relative;
@@ -208,7 +276,7 @@ const handleLogout = async () => {
   transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.25);
 }
 
 /* 折叠状态 */
@@ -295,9 +363,9 @@ const handleLogout = async () => {
 /* 菜单项样式 */
 .sidebar-menu-item {
   height: 44px;
-  margin: 4px 8px;
+  margin: 6px 10px;
   border-radius: var(--border-radius);
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
 }
@@ -306,17 +374,21 @@ const handleLogout = async () => {
   height: 44px;
   line-height: 44px;
   background-color: transparent !important;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  padding: 0 16px !important;
 }
 
 :deep(.el-menu-item:hover) {
   background-color: var(--sidebar-hover-bg) !important;
   color: var(--sidebar-active-color) !important;
+  padding-left: 20px !important;
 }
 
 :deep(.el-menu-item.is-active) {
-  background-color: var(--sidebar-hover-bg) !important;
+  background-color: rgba(64, 158, 255, 0.2) !important;
   color: var(--sidebar-active-color) !important;
+  padding-left: 20px !important;
+  border-left: 3px solid var(--sidebar-active-color);
 }
 
 :deep(.el-menu-item.is-active::before) {
@@ -329,6 +401,7 @@ const handleLogout = async () => {
   height: 24px;
   background-color: var(--sidebar-active-color);
   border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 10px rgba(64, 158, 255, 0.5);
 }
 
 .menu-title {
@@ -365,41 +438,158 @@ const handleLogout = async () => {
   bottom: 20px;
   left: 0;
   right: 0;
-  padding: 0 12px;
+  padding: 16px 12px;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   transition: all var(--transition-duration) ease;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.1) 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
 }
 
+/* 登出按钮 */
 .logout-btn {
   flex: 1;
   min-width: 36px;
-  height: 36px;
-  padding: 0;
+  height: 40px;
+  padding: 0 12px !important;
+  background: linear-gradient(135deg, #f56c6c 0%, #f78989 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 12px rgba(245, 108, 108, 0.25);
+  position: relative;
+  overflow: hidden;
+  font-weight: 600;
+  color: white !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.logout-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: left 0.4s ease;
+  z-index: 0;
+}
+
+.logout-btn:hover::before {
+  left: 100%;
+}
+
+.logout-btn > * {
+  position: relative;
+  z-index: 1;
+}
+
+.logout-btn:hover {
+  transform: translateY(-4px) scale(1.08);
+  box-shadow: 0 8px 20px rgba(245, 108, 108, 0.4);
+  background: linear-gradient(135deg, #fa7b7b 0%, #fc9191 100%) !important;
+}
+
+.logout-btn:active {
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3);
+}
+
+.logout-text {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .logout-btn :deep(.el-icon) {
   font-size: 16px;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+.logout-btn:hover :deep(.el-icon) {
+  transform: scale(1.15) rotate(-10deg);
+}
+
+/* 折叠/展开按钮 */
 .collapse-btn {
-  width: 36px;
-  height: 36px;
-  padding: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0 !important;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.25);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
 }
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s ease;
+
+.collapse-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.25);
+  transition: left 0.4s ease;
+  z-index: 0;
+}
+
+.collapse-btn:hover::before {
+  left: 100%;
+}
+
+.collapse-btn > * {
+  position: relative;
+  z-index: 1;
 }
 
 .collapse-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 2px 0 12px rgba(64, 158, 255, 0.3);
+  transform: translateY(-4px) scale(1.12);
+  box-shadow: 0 8px 20px rgba(64, 158, 255, 0.4);
+  background: linear-gradient(135deg, #53a8ff 0%, #7abfff 100%) !important;
+}
+
+.collapse-btn:active {
+  transform: translateY(-1px) scale(1.06);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+.collapse-btn :deep(.el-icon) {
+  font-size: 18px;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  color: white;
+}
+
+.collapse-btn:hover :deep(.el-icon) {
+  transform: scale(1.2);
+}
+
+/* 侧边栏收起状态下的按钮优化 */
+.sidebar.sidebar-collapsed .sidebar-footer {
+  padding: 12px 8px;
+}
+
+.sidebar.sidebar-collapsed .logout-btn {
+  min-width: 36px;
+  padding: 0 !important;
+}
+
+.sidebar.sidebar-collapsed .logout-btn :deep(.el-icon) {
+  font-size: 16px;
 }
 
 /* 工具提示 */
@@ -440,6 +630,38 @@ const handleLogout = async () => {
   .sidebar.sidebar-collapsed {
     transform: translateX(-100%);
   }
+
+  .sidebar-footer {
+    padding: 16px 12px;
+    bottom: 16px;
+    gap: 8px;
+  }
+
+  .logout-btn {
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .collapse-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .logout-btn,
+  .collapse-btn {
+    transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .logout-btn:active {
+    transform: translateY(-2px) scale(1.06);
+  }
+
+  .collapse-btn:active {
+    transform: translateY(-2px) scale(1.08);
+  }
 }
 
 /* 动画效果 */
@@ -454,8 +676,37 @@ const handleLogout = async () => {
   }
 }
 
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.25);
+  }
+  50% {
+    box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .sidebar-menu-item {
-  animation: fadeIn 0.3s ease forwards;
+  animation: slideInLeft 0.4s ease forwards;
 }
 
 .sidebar-menu-item:nth-child(1) { animation-delay: 0.05s; }
@@ -463,7 +714,6 @@ const handleLogout = async () => {
 .sidebar-menu-item:nth-child(3) { animation-delay: 0.15s; }
 .sidebar-menu-item:nth-child(4) { animation-delay: 0.2s; }
 .sidebar-menu-item:nth-child(5) { animation-delay: 0.25s; }
-.sidebar-menu-item:nth-child(6) { animation-delay: 0.3s; }
 
 /* 优化Element UI默认样式 */
 :deep(.el-menu-item__content) {
@@ -476,5 +726,19 @@ const handleLogout = async () => {
 
 :deep(.el-menu--collapse .el-menu-item__icon) {
   margin-right: 0;
+}
+
+:deep(.logout-btn .el-button__text) {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+:deep(.logout-btn.is-circle) {
+  border-radius: 8px !important;
+}
+
+:deep(.collapse-btn.is-circle) {
+  border-radius: 8px !important;
 }
 </style>

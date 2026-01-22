@@ -10,7 +10,7 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 const goBack = () => {
-  router.push('/dashboard.ts');
+  router.push('/dashboard');
 };
 </script>
 

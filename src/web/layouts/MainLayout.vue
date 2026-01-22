@@ -28,6 +28,7 @@ interface MenuItem {
   icon: any;
   iconColor?: string;
   permission?: string;
+  path?: string;
 }
 
 // 控制侧边栏收起状态（从本地存储读取）
@@ -39,26 +40,30 @@ const userPermissions = ref<string[]>(['admin', 'device_manager', 'alarm_manager
 // 菜单项配置
 const menuItems: MenuItem[] = [
   {
-    index: '/dashboard',
+    index: 'Dashboard',
     title: '首页',
-    icon: House
+    icon: House,
+    path: '/dashboard'
   },
   {
-    index: '/dashboard/device/list',
+    index: 'DeviceList',
     title: '设备管理',
-    icon: Monitor
+    icon: Monitor,
+    path: '/dashboard/device/list'
   },
   {
-    index: '/dashboard/alarm/list',
+    index: 'AlarmList',
     title: '报警管理',
     icon: Warning,
-    iconColor: 'red'
+    iconColor: 'red',
+    path: '/dashboard/alarm/list'
   },
   {
-    index: '/dashboard/setting',
+    index: 'UserCenter',
     title: '用户中心',
     icon: User,
-    permission: 'user_center_view'
+    permission: 'user_center_view',
+    path: '/dashboard/setting'
   }
 ];
 
@@ -71,6 +76,9 @@ const handleCollapseChange = (value: boolean) => {
 
 // 初始化WebSocket连接
 const { connect, disconnect, onMessage, isConnected } = useWebSocket();
+
+// 定义storage事件处理器（在组件外部定义以便卸载时使用）
+let storageHandler: ((e: StorageEvent) => void) | null = null;
 
 // 获取用户ID（从localStorage或其他地方获取）
 const getCurrentUserId = (): string | null => {
@@ -138,7 +146,7 @@ onMounted(() => {
   handleLoginStatusChange();
   
   // 监听storage事件，以响应其他标签页的登录/登出操作
-  const storageHandler = (e: StorageEvent) => {
+  storageHandler = (e: StorageEvent) => {
     if (e.key === 'token' || e.key === 'userId') {
       handleLoginStatusChange();
     }
@@ -151,7 +159,9 @@ onUnmounted(() => {
   disconnect();
   
   // 移除事件监听器
-  window.removeEventListener('storage', storageHandler);
+  if (storageHandler) {
+    window.removeEventListener('storage', storageHandler);
+  }
 });
 </script>
 
